@@ -17,13 +17,13 @@ actualiza solo desde [GDELT](https://www.gdeltproject.org/) — sin intervenció
 ## Stack
 
 Next.js 16 (App Router, Server Actions) · TypeScript · Tailwind v4 · Drizzle ORM ·
-Postgres (Supabase, transaction pooler) · MapLibre *(próximas fases)*.
+Postgres (Supabase, session pooler) · MapLibre.
 
 ## Roadmap
 
 - [x] **Fase 0** — Esqueleto: ingesta GDELT → Postgres → feed en pantalla.
-- [ ] **Fase 1** — Mapa (MapLibre) con eventos geolocalizados.
-- [ ] **Fase 2** — Auto-actualización + indicador de frescura + salud del pipeline.
+- [x] **Fase 1** — Mapa (MapLibre) con actividad por país (GDELT GEO API caída → centroides por país; swappable a nivel ciudad cuando vuelva).
+- [x] **Fase 2** — Auto-refresh de la UI (60s) + indicador de frescura + salud del pipeline (ingest_runs).
 - [ ] **Fase 3** — Inteligencia: clustering + tendencias ("en alza") + clasificación.
 - [ ] **Fase 4** — Filtros, detalle de clúster, KPIs, pulido de UI.
 - [ ] **Fase 5** — Vitrina: diagrama, deploy en vivo.

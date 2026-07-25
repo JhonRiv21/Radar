@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "copy:maplibre": "mkdir -p public/maplibre && cp node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs node_modules/maplibre-gl/dist/maplibre-gl-shared.mjs public/maplibre/",
+    "predev": "npm run copy:maplibre",
+    "prebuild": "npm run copy:maplibre",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -14,6 +17,7 @@
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
+    "maplibre-gl": "^6.0.0",
     "next": "16.2.11",
     "postgres": "^3.4.9",
     "react": "19.2.4",

@@ -1,5 +1,5 @@
 import {
-  pgTable,
+  pgSchema,
   uuid,
   text,
   doublePrecision,
@@ -8,7 +8,9 @@ import {
   index,
 } from "drizzle-orm/pg-core";
 
-export const events = pgTable(
+export const radar = pgSchema("radar");
+
+export const events = radar.table(
   "events",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -33,7 +35,7 @@ export const events = pgTable(
   ],
 );
 
-export const ingestRuns = pgTable("ingest_runs", {
+export const ingestRuns = radar.table("ingest_runs", {
   id: uuid("id").defaultRandom().primaryKey(),
   source: text("source").notNull(),
   startedAt: timestamp("started_at", { withTimezone: true })

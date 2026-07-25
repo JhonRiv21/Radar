@@ -2,9 +2,12 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { events, ingestRuns } from "@/lib/db/schema";
 import type { GdeltArticle } from "@/lib/types/gdelt";
+import { resolveCentroid } from "@/lib/utils/geo";
 
 const SOURCE = "gdelt-doc";
 const GDELT_QUERY = process.env.GDELT_QUERY ?? "(election OR protest OR earthquake)";
+const LANG_FILTER = "(sourcelang:english OR sourcelang:spanish)";
+const ALLOWED_LANGS = new Set(["english", "spanish"]);
 const GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc";
 
 function parseSeenDate(value?: string): Date | null {
@@ -17,7 +20,7 @@ function parseSeenDate(value?: string): Date | null {
 
 async function fetchArticles(): Promise<GdeltArticle[]> {
   const params = new URLSearchParams({
-    query: GDELT_QUERY,
+    query: `${GDELT_QUERY} ${LANG_FILTER}`,
     mode: "artlist",
     maxrecords: "75",
     format: "json",
@@ -45,6 +48,9 @@ async function storeArticles(articles: GdeltArticle[]): Promise<number> {
   let inserted = 0;
   for (const article of articles) {
     if (!article.url) continue;
+    const lang = article.language?.toLowerCase();
+    if (lang && !ALLOWED_LANGS.has(lang)) continue;
+    const centroid = resolveCentroid(article.sourcecountry);
     const result = await db
       .insert(events)
       .values({
@@ -55,6 +61,8 @@ async function storeArticles(articles: GdeltArticle[]): Promise<number> {
         sourceDomain: article.domain ?? null,
         country: article.sourcecountry ?? null,
         lang: article.language ?? null,
+        lat: centroid?.lat ?? null,
+        lng: centroid?.lng ?? null,
         occurredAt: parseSeenDate(article.seendate),
       })
       .onConflictDoNothing({ target: events.externalId })

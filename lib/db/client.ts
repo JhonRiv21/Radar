@@ -6,6 +6,7 @@ const globalForDb = globalThis as unknown as {
   pg?: ReturnType<typeof postgres>;
 };
 
+// prepare:false: compatible con el pooler de Supabase (session o transaction).
 const client =
   globalForDb.pg ?? postgres(process.env.DATABASE_URL ?? "", { prepare: false });
 
