@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, gt } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { events, ingestRuns } from "@/lib/db/schema";
 import type { GdeltArticle } from "@/lib/types/gdelt";
@@ -72,7 +72,17 @@ async function storeArticles(articles: GdeltArticle[]): Promise<number> {
   return inserted;
 }
 
+// GDELT pide un máximo de 1 petición cada 5s; evitamos que un doble clic la dispare.
+const MIN_INTERVAL_MS = 10_000;
+
 export async function runIngest() {
+  const [recent] = await db
+    .select({ id: ingestRuns.id })
+    .from(ingestRuns)
+    .where(gt(ingestRuns.startedAt, new Date(Date.now() - MIN_INTERVAL_MS)))
+    .limit(1);
+  if (recent) return { ok: true, skipped: true };
+
   const [run] = await db
     .insert(ingestRuns)
     .values({ source: SOURCE })

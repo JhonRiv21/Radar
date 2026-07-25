@@ -1,0 +1,18 @@
+name: Ingesta GDELT
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar ingesta
+        run: |
+          code=$(curl -sS -o /tmp/out.json -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.RADAR_URL }}/api/cron/ingest")
+          cat /tmp/out.json
+          test "$code" = "200"

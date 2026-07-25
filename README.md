@@ -10,6 +10,7 @@ actualiza solo desde [GDELT](https://www.gdeltproject.org/) — sin intervenció
 
 - **Motor agnóstico de fuente.** Cambiar de GDELT a otra fuente = cambiar solo el adaptador de ingesta.
 - **Guarda su propio snapshot.** Si la fuente se cae, la UI sigue mostrando el último estado (degradación elegante). Un demo en vivo nunca se ve roto.
+- **Retención acotada, con freno de seguridad.** Purga eventos de más de 30 días, pero **solo si entraron datos en las últimas 24h**: si la ingesta se rompe, prefiere historia vieja antes que una base vacía.
 - **Ingesta desacoplada del trigger.** `runIngest()` la dispara una ruta cron protegida: Vercel Cron hoy, cron del sistema en Hetzner mañana. Mismo código.
 - **Portable de raíz.** Postgres por connection string (nada de SDKs propietarios) + `output: standalone`
 - **Costo de IA: $0.** La "inteligencia" (clustering, tendencias, clasificación) se hace con estadística y NLP clásico, en el mismo servidor.
@@ -23,7 +24,7 @@ Postgres (Supabase, session pooler) · MapLibre.
 
 - [x] **Fase 0** — Esqueleto: ingesta GDELT → Postgres → feed en pantalla.
 - [x] **Fase 1** — Mapa (MapLibre) con actividad por país (GDELT GEO API caída → centroides por país; swappable a nivel ciudad cuando vuelva).
-- [x] **Fase 2** — Auto-refresh de la UI (60s) + indicador de frescura + salud del pipeline (ingest_runs).
+- [x] **Fase 2** — Ingesta automática (GitHub Actions cada 30 min) + auto-refresh de UI (60s) + estados fresco/desactualizado/error + `/api/health`.
 - [ ] **Fase 3** — Inteligencia: clustering + tendencias ("en alza") + clasificación.
 - [ ] **Fase 4** — Filtros, detalle de clúster, KPIs, pulido de UI.
 - [ ] **Fase 5** — Vitrina: diagrama, deploy en vivo.

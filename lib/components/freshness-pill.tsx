@@ -1,24 +1,32 @@
 import { formatDateTime, timeAgo } from "@/lib/utils/date";
-import type { IngestRun } from "@/lib/types/event";
+import type { PipelineHealth } from "@/lib/types/event";
 
-const STATUS_COLOR: Record<string, string> = {
-  ok: "bg-accent",
-  error: "bg-red-400",
-  running: "bg-amber-400",
+const STYLES: Record<PipelineHealth["level"], { dot: string; text: string }> = {
+  fresh: { dot: "bg-emerald-400", text: "text-muted" },
+  stale: { dot: "bg-amber-400", text: "text-amber-300" },
+  error: { dot: "bg-red-400", text: "text-red-300" },
+  empty: { dot: "bg-muted", text: "text-muted" },
 };
 
-export function FreshnessPill({ run }: { run: IngestRun | null }) {
-  const color = run ? (STATUS_COLOR[run.status] ?? "bg-muted") : "bg-muted";
-  const at = run?.finishedAt ?? run?.startedAt ?? null;
-  const label = run ? `actualizado ${timeAgo(at)}` : "sin datos aún";
+function label(health: PipelineHealth): string {
+  if (health.level === "empty") return "sin datos aún";
+  if (health.level === "error") return "fallo al actualizar";
+  const prefix = health.level === "stale" ? "desactualizado" : "actualizado";
+  return `${prefix} ${timeAgo(health.lastSuccessAt ?? health.lastRunAt)}`;
+}
+
+export function FreshnessPill({ health }: { health: PipelineHealth }) {
+  const style = STYLES[health.level];
+  const at = health.lastSuccessAt ?? health.lastRunAt;
+  const tooltip = health.error ?? (at ? formatDateTime(at) : undefined);
 
   return (
     <span
-      title={at ? formatDateTime(at) : undefined}
-      className="inline-flex items-center gap-2 rounded-full border border-border bg-panel px-3 py-1 text-xs text-muted"
+      title={tooltip}
+      className={`inline-flex items-center gap-2 rounded-full border border-border bg-panel px-3 py-1 text-xs ${style.text}`}
     >
-      <span className={`h-2 w-2 rounded-full ${color}`} />
-      {label}
+      <span className={`h-2 w-2 rounded-full ${style.dot}`} />
+      {label(health)}
     </span>
   );
 }

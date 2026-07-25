@@ -1,7 +1,7 @@
 import { desc, isNotNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
-import { events, ingestRuns } from "@/lib/db/schema";
-import type { EventRow, IngestRun, CountryHotspot } from "@/lib/types/event";
+import { events } from "@/lib/db/schema";
+import type { EventRow, CountryHotspot } from "@/lib/types/event";
 
 export async function getRecentEvents(limit = 60): Promise<EventRow[]> {
   return await db
@@ -9,15 +9,6 @@ export async function getRecentEvents(limit = 60): Promise<EventRow[]> {
     .from(events)
     .orderBy(sql`${events.occurredAt} desc nulls last`, desc(events.ingestedAt))
     .limit(limit);
-}
-
-export async function getLastRun(): Promise<IngestRun | null> {
-  const [run] = await db
-    .select()
-    .from(ingestRuns)
-    .orderBy(desc(ingestRuns.startedAt))
-    .limit(1);
-  return run ?? null;
 }
 
 export async function getCountryHotspots(): Promise<CountryHotspot[]> {

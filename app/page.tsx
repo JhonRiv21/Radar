@@ -1,29 +1,38 @@
-import {
-  getRecentEvents,
-  getLastRun,
-  getCountryHotspots,
-} from "@/lib/services/events";
+import { getRecentEvents, getCountryHotspots } from "@/lib/services/events";
+import { getPipelineHealth } from "@/lib/services/health";
 import { FreshnessPill } from "@/lib/components/freshness-pill";
+import { RefreshButton } from "@/lib/components/refresh-button";
 import { EventFeed } from "@/lib/components/event-feed";
 import { EventMap } from "@/lib/components/event-map";
 import { DbError } from "@/lib/components/db-error";
 import { AutoRefresh } from "@/lib/components/auto-refresh";
-import type { EventRow, IngestRun, CountryHotspot } from "@/lib/types/event";
+import type {
+  EventRow,
+  CountryHotspot,
+  PipelineHealth,
+} from "@/lib/types/event";
 import { refreshEvents } from "./actions";
 
 export const dynamic = "force-dynamic";
 
+const EMPTY_HEALTH: PipelineHealth = {
+  level: "empty",
+  lastSuccessAt: null,
+  lastRunAt: null,
+  error: null,
+};
+
 export default async function Home() {
   let events: EventRow[] = [];
-  let lastRun: IngestRun | null = null;
   let hotspots: CountryHotspot[] = [];
+  let health: PipelineHealth = EMPTY_HEALTH;
   let error: string | null = null;
 
   try {
-    [events, lastRun, hotspots] = await Promise.all([
+    [events, hotspots, health] = await Promise.all([
       getRecentEvents(),
-      getLastRun(),
       getCountryHotspots(),
+      getPipelineHealth(),
     ]);
   } catch (err) {
     error = err instanceof Error ? err.message : "Error de base de datos";
@@ -46,14 +55,9 @@ export default async function Home() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <FreshnessPill run={lastRun} />
+            <FreshnessPill health={health} />
             <form action={refreshEvents}>
-              <button
-                type="submit"
-                className="rounded-md border border-border bg-panel px-3 py-1.5 text-sm transition-colors hover:border-accent hover:text-accent"
-              >
-                Actualizar ahora
-              </button>
+              <RefreshButton />
             </form>
           </div>
         </div>
