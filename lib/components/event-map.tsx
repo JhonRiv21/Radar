@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import {
   Map as MlMap,
-  AttributionControl,
   NavigationControl,
   Popup,
   setWorkerUrl,
@@ -11,19 +10,27 @@ import {
   type StyleSpecification,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { hotspotsToGeoJson } from "@/lib/utils/geo";
+import { hotspotsToGeoJson, graticule } from "@/lib/utils/geo";
+import { useMapFocus } from "@/lib/components/map-focus";
 import type { CountryHotspot } from "@/lib/types/event";
-
-// Turbopack no resuelve el worker de MapLibre v6; se sirve desde /public (ver script copy:maplibre).
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
-type Projection = "globe" | "mercator";
+const MIN_ZOOM = 1.6;
+const DEFAULT_ZOOM = 2.3;
+const MAX_ZOOM = 5.5;
+const FOCUS_ZOOM = 4;
+const PING_LAYERS = [
+  "hotspots-ping-a",
+  "hotspots-ping-b",
+  "hotspots-ping-c",
+  "hotspots-ping-d",
+] as const;
+const PING_CYCLE_MS = 3200;
 
 const SATELLITE_TILES =
   "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg";
 
-const DEGREES_PER_STEP = 3;
-const STEP_MS = 1200;
+const DEGREES_PER_SECOND = 2.4;
 const RESUME_DELAY_MS = 4000;
 
 const BASE_STYLE: StyleSpecification = {
@@ -38,8 +45,6 @@ const BASE_STYLE: StyleSpecification = {
     "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 0.4, 7, 0],
   },
   layers: [
-    // En proyección de globo el background pinta la superficie del planeta: océano.
-    // Tono cercano al satelital para que no se note mientras cargan los tiles.
     { id: "ocean", type: "background", paint: { "background-color": "#0b2138" } },
   ],
 };
@@ -48,7 +53,8 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
   const dataRef = useRef(hotspots);
-  const [projection, setProjection] = useState<Projection>("globe");
+  const flyToRef = useRef<((lat: number, lng: number) => void) | null>(null);
+  const { focus } = useMapFocus();
 
   useEffect(() => {
     const container = containerRef.current;
@@ -58,22 +64,16 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
       container,
       style: BASE_STYLE,
       center: [-20, 20],
-      zoom: 1.6,
+      zoom: DEFAULT_ZOOM,
+      minZoom: MIN_ZOOM,
+      maxZoom: MAX_ZOOM,
       attributionControl: false,
     });
     map.addControl(new NavigationControl({ showCompass: false }), "top-right");
-    map.addControl(new AttributionControl({ compact: true }));
     mapRef.current = map;
 
     let spinning = true;
     let resumeTimer: ReturnType<typeof setTimeout> | undefined;
-
-    const spin = () => {
-      if (!spinning) return;
-      const center = map.getCenter();
-      center.lng -= DEGREES_PER_STEP;
-      map.easeTo({ center, duration: STEP_MS, easing: (n) => n });
-    };
 
     const pause = () => {
       spinning = false;
@@ -84,12 +84,10 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
       clearTimeout(resumeTimer);
       resumeTimer = setTimeout(() => {
         spinning = true;
-        spin();
       }, RESUME_DELAY_MS);
     };
 
     map.on("load", () => {
-      // Mapa base best-effort: si el GeoJSON no carga, las burbujas igual se dibujan.
       map.addSource("world", { type: "geojson", data: "/world-countries.geojson" });
       map.addLayer({
         id: "land",
@@ -98,7 +96,6 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
         paint: { "fill-color": "#26332b" },
       });
 
-      // Satelital real (NASA, dominio público, sin API key). Va encima del respaldo vectorial.
       map.addSource("satellite", {
         type: "raster",
         tiles: [SATELLITE_TILES],
@@ -120,6 +117,18 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
         },
       });
 
+      map.addSource("graticule", { type: "geojson", data: graticule() });
+      map.addLayer({
+        id: "graticule",
+        type: "line",
+        source: "graticule",
+        paint: {
+          "line-color": "#7dd3fc",
+          "line-width": 0.5,
+          "line-opacity": 0.16,
+        },
+      });
+
       map.addSource("hotspots", {
         type: "geojson",
         data: hotspotsToGeoJson(dataRef.current),
@@ -134,15 +143,30 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
             ["linear"],
             ["get", "count"],
             1,
-            8,
+            14,
             100,
-            42,
+            56,
           ],
           "circle-color": "#ff2e88",
-          "circle-opacity": 0.22,
-          "circle-blur": 0.6,
+          "circle-opacity": 0.28,
+          "circle-blur": 1,
         },
       });
+      for (const id of PING_LAYERS) {
+        map.addLayer({
+          id,
+          type: "circle",
+          source: "hotspots",
+          paint: {
+            "circle-radius": 1,
+            "circle-color": "transparent",
+            "circle-opacity": 0,
+            "circle-stroke-color": "#ff2e88",
+            "circle-stroke-width": 1.5,
+            "circle-stroke-opacity": 0,
+          },
+        });
+      }
       map.addLayer({
         id: "hotspots-core",
         type: "circle",
@@ -186,10 +210,65 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
         map.getCanvas().style.cursor = "";
       });
 
-      spin();
+      startLoop();
     });
 
-    map.on("moveend", spin);
+    let frameId = 0;
+    let lastFrame = 0;
+    const startLoop = () => {
+      const step = (now: number) => {
+        const elapsed = lastFrame ? (now - lastFrame) / 1000 : 0;
+        lastFrame = now;
+
+        if (spinning && !map.isMoving()) {
+          const center = map.getCenter();
+          center.lng -= DEGREES_PER_SECOND * elapsed;
+          map.jumpTo({ center });
+        }
+
+        PING_LAYERS.forEach((id, index) => {
+          if (!map.getLayer(id)) return;
+          const phase =
+            (now / PING_CYCLE_MS + index / PING_LAYERS.length) % 1;
+          map.setPaintProperty(id, "circle-radius", [
+            "interpolate",
+            ["linear"],
+            ["get", "count"],
+            1,
+            4 + phase * 26,
+            100,
+            14 + phase * 60,
+          ]);
+          map.setPaintProperty(
+            id,
+            "circle-stroke-opacity",
+            0.6 * (1 - phase) ** 1.4,
+          );
+        });
+
+        frameId = requestAnimationFrame(step);
+      };
+      frameId = requestAnimationFrame(step);
+    };
+
+    const applyPadding = () => {
+      const wide = window.matchMedia("(min-width: 64rem)").matches;
+      map.setPadding({
+        left: wide ? container.clientWidth * 0.4 : 0,
+        top: container.clientHeight * 0.12,
+        right: 0,
+        bottom: 0,
+      });
+    };
+    map.once("load", applyPadding);
+    window.addEventListener("resize", applyPadding);
+
+    flyToRef.current = (lat, lng) => {
+      pause();
+      map.flyTo({ center: [lng, lat], zoom: FOCUS_ZOOM, duration: 1600 });
+      resume();
+    };
+
     map.on("mousedown", pause);
     map.on("touchstart", pause);
     map.on("wheel", pause);
@@ -198,10 +277,17 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
 
     return () => {
       clearTimeout(resumeTimer);
+      cancelAnimationFrame(frameId);
+      window.removeEventListener("resize", applyPadding);
+      flyToRef.current = null;
       map.remove();
       mapRef.current = null;
     };
   }, []);
+
+  useEffect(() => {
+    if (focus) flyToRef.current?.(focus.lat, focus.lng);
+  }, [focus]);
 
   useEffect(() => {
     dataRef.current = hotspots;
@@ -211,39 +297,5 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
     if (source) source.setData(hotspotsToGeoJson(hotspots));
   }, [hotspots]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    const apply = () => map.setProjection({ type: projection });
-    if (map.isStyleLoaded()) {
-      apply();
-      return;
-    }
-    map.once("load", apply);
-    return () => {
-      map.off("load", apply);
-    };
-  }, [projection]);
-
-  return (
-    <div className="relative">
-      <div ref={containerRef} className="h-[440px] w-full" />
-      <div className="absolute left-3 top-3 flex overflow-hidden rounded-md border border-border bg-panel/90 text-xs backdrop-blur">
-        {(["globe", "mercator"] as const).map((type) => (
-          <button
-            key={type}
-            type="button"
-            onClick={() => setProjection(type)}
-            className={
-              projection === type
-                ? "bg-accent/15 px-3 py-1.5 text-accent"
-                : "px-3 py-1.5 text-muted transition-colors hover:text-foreground"
-            }
-          >
-            {type === "globe" ? "Globo" : "Plano"}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+  return <div ref={containerRef} className="h-full w-full" />;
 }

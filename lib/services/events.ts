@@ -3,14 +3,25 @@ import { db } from "@/lib/db/client";
 import { events } from "@/lib/db/schema";
 import type { EventRow, CountryHotspot } from "@/lib/types/event";
 
-export async function getRecentEvents(limit = 60): Promise<EventRow[]> {
+export const PAGE_SIZE = 10;
+
+export async function getEventsPage(page: number): Promise<EventRow[]> {
   return await db
     .select()
     .from(events)
     .orderBy(sql`${events.occurredAt} desc nulls last`, desc(events.ingestedAt))
-    .limit(limit);
+    .limit(PAGE_SIZE)
+    .offset((page - 1) * PAGE_SIZE);
 }
 
+export async function getEventsCount(): Promise<number> {
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(events);
+  return row?.n ?? 0;
+}
+
+// Devuelve solo coordenada y conteo, no los eventos completos.
 export async function getCountryHotspots(): Promise<CountryHotspot[]> {
   const rows = await db
     .select({

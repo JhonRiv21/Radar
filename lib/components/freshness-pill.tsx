@@ -23,7 +23,7 @@ export function FreshnessPill({ health }: { health: PipelineHealth }) {
   return (
     <span
       title={tooltip}
-      className={`inline-flex items-center gap-2 rounded-full border border-border bg-panel px-3 py-1 text-xs ${style.text}`}
+      className={`glass-soft inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${style.text}`}
     >
       <span className={`h-2 w-2 rounded-full ${style.dot}`} />
       {label(health)}
