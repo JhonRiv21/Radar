@@ -1,18 +1,19 @@
-import { getEventsPage, getEventsCount } from "@/lib/services/events";
-import { EventStream } from "@/lib/components/event-stream";
+import { getHazardsPage } from "@/lib/services/hazards";
+import { HazardStream } from "@/lib/components/hazard-stream";
 import { DbError } from "@/lib/components/db-error";
-import type { EventRow } from "@/lib/types/event";
+import type { HazardRow } from "@/lib/types/hazard";
+
+const INITIAL_FILTERS = { kinds: [], country: null, days: 30 };
 
 export async function EventsSection() {
-  let events: EventRow[];
-  let total: number;
+  let hazards: HazardRow[];
   try {
-    [events, total] = await Promise.all([getEventsPage(1), getEventsCount()]);
+    hazards = await getHazardsPage(1, INITIAL_FILTERS);
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Error de base de datos";
     return <DbError message={message} />;
   }
 
-  return <EventStream initial={events} total={total} />;
+  return <HazardStream initial={hazards} />;
 }

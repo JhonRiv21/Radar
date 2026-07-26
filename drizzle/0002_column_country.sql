@@ -1,0 +1,1 @@
+ALTER TABLE "radar"."hazards" ADD COLUMN "country" text;

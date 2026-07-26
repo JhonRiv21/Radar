@@ -1,15 +1,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { runIngest } from "@/lib/services/gdelt";
-import { getEventsPage } from "@/lib/services/events";
-import type { EventRow } from "@/lib/types/event";
+import { ingestHazards, getHazardsPage } from "@/lib/services/hazards";
+import type { HazardRow, HazardFilters } from "@/lib/types/hazard";
+
+const REFRESH_DAYS = 7;
 
 export async function refreshEvents() {
-  await runIngest();
+  await ingestHazards(REFRESH_DAYS);
   revalidatePath("/");
 }
 
-export async function fetchEventsPage(page: number): Promise<EventRow[]> {
-  return await getEventsPage(page);
+export async function fetchHazardsPage(
+  page: number,
+  filters: HazardFilters,
+): Promise<HazardRow[]> {
+  return await getHazardsPage(page, filters);
 }

@@ -13,11 +13,13 @@ export type MapFocus = {
 type ContextValue = {
   focus: MapFocus | null;
   focusOn: (target: Omit<MapFocus, "token">) => void;
+  clearFocus: () => void;
 };
 
 const MapFocusContext = createContext<ContextValue>({
   focus: null,
   focusOn: () => {},
+  clearFocus: () => {},
 });
 
 export function MapFocusProvider({ children }: { children: React.ReactNode }) {
@@ -27,7 +29,12 @@ export function MapFocusProvider({ children }: { children: React.ReactNode }) {
     setFocus({ ...target, token: Date.now() });
   }, []);
 
-  const value = useMemo(() => ({ focus, focusOn }), [focus, focusOn]);
+  const clearFocus = useCallback(() => setFocus(null), []);
+
+  const value = useMemo(
+    () => ({ focus, focusOn, clearFocus }),
+    [focus, focusOn, clearFocus],
+  );
 
   return (
     <MapFocusContext.Provider value={value}>{children}</MapFocusContext.Provider>

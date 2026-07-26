@@ -1,12 +1,12 @@
-import { getCountryHotspots } from "@/lib/services/events";
+import { getHazardPoints } from "@/lib/services/hazards";
 import { EventMap } from "@/lib/components/event-map";
 import { DbError } from "@/lib/components/db-error";
-import type { CountryHotspot } from "@/lib/types/event";
+import type { HazardPoint } from "@/lib/types/hazard";
 
 export async function MapSection() {
-  let hotspots: CountryHotspot[];
+  let points: HazardPoint[];
   try {
-    hotspots = await getCountryHotspots();
+    points = await getHazardPoints();
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Error de base de datos";
@@ -17,14 +17,9 @@ export async function MapSection() {
     );
   }
 
-  const total = hotspots.reduce((sum, h) => sum + h.count, 0);
-
   return (
     <div className="relative h-full w-full">
-      <EventMap hotspots={hotspots} />
-      <div className="glass-soft pointer-events-none absolute bottom-4 right-4 rounded-md px-3 py-1.5 text-xs text-muted">
-        {hotspots.length} países · {total} eventos
-      </div>
+      <EventMap points={points} />
     </div>
   );
 }

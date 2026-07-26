@@ -8,6 +8,27 @@
       "when": 1784913480136,
       "tag": "0000_naive_red_ghost",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785006150117,
+      "tag": "0001_bouncy_tony_stark",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785007719279,
+      "tag": "0002_worthless_mathemanic",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785021601805,
+      "tag": "0003_heavy_iron_patriot",
+      "breakpoints": true
     }
   ]
 }

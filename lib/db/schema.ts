@@ -5,6 +5,7 @@ import {
   doublePrecision,
   timestamp,
   integer,
+  boolean,
   index,
 } from "drizzle-orm/pg-core";
 
@@ -24,6 +25,7 @@ export const events = radar.table(
     lat: doublePrecision("lat"),
     lng: doublePrecision("lng"),
     category: text("category"),
+    hazardId: uuid("hazard_id"),
     occurredAt: timestamp("occurred_at", { withTimezone: true }),
     ingestedAt: timestamp("ingested_at", { withTimezone: true })
       .defaultNow()
@@ -32,6 +34,37 @@ export const events = radar.table(
   (t) => [
     index("events_ingested_at_idx").on(t.ingestedAt),
     index("events_occurred_at_idx").on(t.occurredAt),
+  ],
+);
+
+export const hazards = radar.table(
+  "hazards",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    externalId: text("external_id").notNull().unique(),
+    source: text("source").notNull(),
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    place: text("place"),
+    magnitude: doublePrecision("magnitude"),
+    depthKm: doublePrecision("depth_km"),
+    significance: integer("significance"),
+    alert: text("alert"),
+    tsunami: boolean("tsunami").default(false).notNull(),
+    lat: doublePrecision("lat").notNull(),
+    lng: doublePrecision("lng").notNull(),
+    country: text("country"),
+    url: text("url"),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    ingestedAt: timestamp("ingested_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    coverageCount: integer("coverage_count").default(0).notNull(),
+    coverageCheckedAt: timestamp("coverage_checked_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("hazards_occurred_at_idx").on(t.occurredAt),
+    index("hazards_kind_idx").on(t.kind),
   ],
 );
 

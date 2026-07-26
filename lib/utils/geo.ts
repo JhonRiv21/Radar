@@ -1,16 +1,6 @@
-import { COUNTRY_CENTROIDS, COUNTRY_ALIASES } from "@/lib/assets/country-centroids";
-import type { CountryHotspot } from "@/lib/types/event";
+import { HAZARD_KINDS } from "@/lib/assets/hazard-kinds";
+import type { HazardPoint } from "@/lib/types/hazard";
 
-export function resolveCentroid(
-  country: string | null | undefined,
-): { lat: number; lng: number } | null {
-  if (!country) return null;
-  const key = country.trim().toLowerCase();
-  const resolved = COUNTRY_ALIASES[key] ?? key;
-  return COUNTRY_CENTROIDS[resolved] ?? null;
-}
-
-// Retícula de meridianos y paralelos: da lectura de globo terráqueo técnico.
 export function graticule(step = 20) {
   const features = [];
   for (let lng = -180; lng <= 180; lng += step) {
@@ -34,13 +24,19 @@ export function graticule(step = 20) {
   return { type: "FeatureCollection" as const, features };
 }
 
-export function hotspotsToGeoJson(hotspots: CountryHotspot[]) {
+export function hazardsToGeoJson(points: HazardPoint[]) {
   return {
     type: "FeatureCollection" as const,
-    features: hotspots.map((h) => ({
+    features: points.map((p) => ({
       type: "Feature" as const,
-      geometry: { type: "Point" as const, coordinates: [h.lng, h.lat] },
-      properties: { country: h.country ?? "—", count: h.count },
+      geometry: { type: "Point" as const, coordinates: [p.lng, p.lat] },
+      properties: {
+        id: p.id,
+        kind: p.kind,
+        title: p.title,
+        color: HAZARD_KINDS[p.kind].color,
+        weight: p.magnitude ?? 3
+      },
     })),
   };
 }

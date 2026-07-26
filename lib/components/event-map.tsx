@@ -1,24 +1,30 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Map as MlMap,
   NavigationControl,
-  Popup,
+  LngLatBounds,
   setWorkerUrl,
   type GeoJSONSource,
   type StyleSpecification,
 } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { hotspotsToGeoJson, graticule } from "@/lib/utils/geo";
+import { hazardsToGeoJson, graticule } from "@/lib/utils/geo";
 import { useMapFocus } from "@/lib/components/map-focus";
-import type { CountryHotspot } from "@/lib/types/event";
+import { MapDetail } from "@/lib/components/map-detail";
+import {
+  useHazardFilter,
+  RANGE_OPTIONS,
+} from "@/lib/components/hazard-filter";
+import type { HazardPoint } from "@/lib/types/hazard";
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
 const MIN_ZOOM = 1.6;
 const DEFAULT_ZOOM = 2.3;
-const MAX_ZOOM = 5.5;
-const FOCUS_ZOOM = 4;
+const MAX_ZOOM = 7.5;
+const FOCUS_ZOOM = 6;
+const COUNTRY_MAX_ZOOM = 5.5;
 const PING_LAYERS = [
   "hotspots-ping-a",
   "hotspots-ping-b",
@@ -26,6 +32,8 @@ const PING_LAYERS = [
   "hotspots-ping-d",
 ] as const;
 const PING_CYCLE_MS = 3200;
+const PING_MIN_WEIGHT = 5;
+const PING_FPS_MS = 1000 / 30;
 
 const SATELLITE_TILES =
   "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg";
@@ -49,12 +57,17 @@ const BASE_STYLE: StyleSpecification = {
   ],
 };
 
-export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
+export function EventMap({ points }: { points: HazardPoint[] }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MlMap | null>(null);
-  const dataRef = useRef(hotspots);
+  const dataRef = useRef(points);
   const flyToRef = useRef<((lat: number, lng: number) => void) | null>(null);
-  const { focus } = useMapFocus();
+  const fitRef = useRef<((coords: [number, number][]) => void) | null>(null);
+  const { focus, focusOn, clearFocus } = useMapFocus();
+  const { isVisible, country, range } = useHazardFilter();
+  const [autoSpin, setAutoSpin] = useState(true);
+  const autoSpinRef = useRef(true);
+  const focusOnRef = useRef(focusOn);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -131,7 +144,7 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
 
       map.addSource("hotspots", {
         type: "geojson",
-        data: hotspotsToGeoJson(dataRef.current),
+        data: hazardsToGeoJson(dataRef.current),
       });
       map.addLayer({
         id: "hotspots-glow",
@@ -141,14 +154,14 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
           "circle-radius": [
             "interpolate",
             ["linear"],
-            ["get", "count"],
-            1,
-            14,
-            100,
-            56,
+            ["get", "weight"],
+            3,
+            8,
+            8,
+            34,
           ],
-          "circle-color": "#ff2e88",
-          "circle-opacity": 0.28,
+          "circle-color": ["get", "color"],
+          "circle-opacity": 0.25,
           "circle-blur": 1,
         },
       });
@@ -157,11 +170,13 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
           id,
           type: "circle",
           source: "hotspots",
+          // Solo pulsan los eventos notables: menos ruido visual y mucho menos trabajo por frame.
+          filter: [">=", ["get", "weight"], PING_MIN_WEIGHT],
           paint: {
             "circle-radius": 1,
             "circle-color": "transparent",
             "circle-opacity": 0,
-            "circle-stroke-color": "#ff2e88",
+            "circle-stroke-color": ["get", "color"],
             "circle-stroke-width": 1.5,
             "circle-stroke-opacity": 0,
           },
@@ -175,13 +190,13 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
           "circle-radius": [
             "interpolate",
             ["linear"],
-            ["get", "count"],
-            1,
+            ["get", "weight"],
             3,
-            100,
-            14,
+            3,
+            8,
+            12,
           ],
-          "circle-color": "#ff2e88",
+          "circle-color": ["get", "color"],
           "circle-opacity": 0.95,
           "circle-stroke-color": "#ffffff",
           "circle-stroke-width": 1,
@@ -192,16 +207,15 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
       map.on("click", "hotspots-core", (e) => {
         const feature = e.features?.[0];
         if (!feature) return;
-        const { country, count } = feature.properties as {
-          country: string;
-          count: number;
-        };
-        new Popup({ closeButton: false, offset: 10 })
-          .setLngLat(e.lngLat)
-          .setHTML(
-            `<strong>${country}</strong><br/><span class="popup-count">${count}</span> eventos`,
-          )
-          .addTo(map);
+        const { id } = feature.properties as { id: string };
+        const point = dataRef.current.find((p) => p.id === id);
+        if (!point) return;
+        focusOnRef.current({
+          lat: point.lat,
+          lng: point.lng,
+          country: point.country,
+          eventId: point.id,
+        });
       });
       map.on("mouseenter", "hotspots-core", () => {
         map.getCanvas().style.cursor = "pointer";
@@ -215,30 +229,30 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
 
     let frameId = 0;
     let lastFrame = 0;
+    let lastPing = 0;
     const startLoop = () => {
       const step = (now: number) => {
         const elapsed = lastFrame ? (now - lastFrame) / 1000 : 0;
         lastFrame = now;
 
-        if (spinning && !map.isMoving()) {
+        if (spinning && autoSpinRef.current && !map.isMoving()) {
           const center = map.getCenter();
           center.lng -= DEGREES_PER_SECOND * elapsed;
           map.jumpTo({ center });
         }
 
+        // El pulso no necesita 60fps; a 30 se ve igual y baja a la mitad el trabajo de GPU.
+        if (now - lastPing < PING_FPS_MS) {
+          frameId = requestAnimationFrame(step);
+          return;
+        }
+        lastPing = now;
+
         PING_LAYERS.forEach((id, index) => {
           if (!map.getLayer(id)) return;
           const phase =
             (now / PING_CYCLE_MS + index / PING_LAYERS.length) % 1;
-          map.setPaintProperty(id, "circle-radius", [
-            "interpolate",
-            ["linear"],
-            ["get", "count"],
-            1,
-            4 + phase * 26,
-            100,
-            14 + phase * 60,
-          ]);
+          map.setPaintProperty(id, "circle-radius", 6 + phase * 34);
           map.setPaintProperty(
             id,
             "circle-stroke-opacity",
@@ -263,6 +277,21 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
     map.once("load", applyPadding);
     window.addEventListener("resize", applyPadding);
 
+    fitRef.current = (coords) => {
+      if (!coords.length) return;
+      pause();
+      const bounds = coords.reduce(
+        (acc, c) => acc.extend(c),
+        new LngLatBounds(coords[0], coords[0]),
+      );
+      map.fitBounds(bounds, {
+        padding: 80,
+        maxZoom: COUNTRY_MAX_ZOOM,
+        duration: 1600,
+      });
+      resume();
+    };
+
     flyToRef.current = (lat, lng) => {
       pause();
       map.flyTo({ center: [lng, lat], zoom: FOCUS_ZOOM, duration: 1600 });
@@ -280,22 +309,78 @@ export function EventMap({ hotspots }: { hotspots: CountryHotspot[] }) {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", applyPadding);
       flyToRef.current = null;
+      fitRef.current = null;
       map.remove();
       mapRef.current = null;
     };
   }, []);
 
+  const visible = useMemo(
+    () =>
+      points.filter((p) =>
+        isVisible({ kind: p.kind, country: p.country, occurredAt: p.occurredAt }),
+      ),
+    [points, isVisible],
+  );
+
   useEffect(() => {
     if (focus) flyToRef.current?.(focus.lat, focus.lng);
   }, [focus]);
 
+  // Al elegir país se encuadra a sus eventos, no a un centroide fijo.
   useEffect(() => {
-    dataRef.current = hotspots;
+    if (country === "all") return;
+    const coords = points
+      .filter((p) => p.country === country)
+      .map((p) => [p.lng, p.lat] as [number, number]);
+    fitRef.current?.(coords);
+  }, [country, points]);
+
+  useEffect(() => {
+    const filtered = visible;
+    dataRef.current = filtered;
     const source = mapRef.current?.getSource("hotspots") as
       | GeoJSONSource
       | undefined;
-    if (source) source.setData(hotspotsToGeoJson(hotspots));
-  }, [hotspots]);
+    if (source) source.setData(hazardsToGeoJson(filtered));
+  }, [visible]);
 
-  return <div ref={containerRef} className="h-full w-full" />;
+  useEffect(() => {
+    focusOnRef.current = focusOn;
+  }, [focusOn]);
+
+  const selectedPoint = focus
+    ? (points.find((p) => p.id === focus.eventId) ?? null)
+    : null;
+
+  const rangeLabel =
+    RANGE_OPTIONS.find((o) => o.value === range)?.label ?? "";
+
+  const toggleSpin = () => {
+    const next = !autoSpin;
+    autoSpinRef.current = next;
+    setAutoSpin(next);
+  };
+
+  return (
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="h-full w-full" />
+      {selectedPoint && (
+        <MapDetail point={selectedPoint} onClose={() => clearFocus()} />
+      )}
+
+      <div className="glass-soft pointer-events-none absolute bottom-4 right-4 rounded-md px-3 py-1.5 text-xs text-muted">
+        {visible.length} eventos · {rangeLabel}
+      </div>
+      <button
+        type="button"
+        onClick={toggleSpin}
+        title={autoSpin ? "Pausar rotación" : "Reanudar rotación"}
+        aria-label={autoSpin ? "Pausar rotación" : "Reanudar rotación"}
+        className="glass-soft absolute right-2.5 top-44 flex h-7 w-7 items-center justify-center rounded text-sm text-muted transition-colors hover:text-foreground"
+      >
+        {autoSpin ? "❚❚" : "▶"}
+      </button>
+    </div>
+  );
 }

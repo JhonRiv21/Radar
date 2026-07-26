@@ -1,0 +1,1 @@
+ALTER TABLE "radar"."hazards" ADD COLUMN "coverage_checked_at" timestamp with time zone;

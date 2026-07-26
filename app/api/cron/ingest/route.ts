@@ -1,9 +1,10 @@
-import { runIngest } from "@/lib/services/gdelt";
+import { runHazardIngest } from "@/lib/services/hazards";
 import { cleanupOldData } from "@/lib/services/retention";
 
 export const dynamic = "force-dynamic";
 
-// Vercel Cron manda `Authorization: Bearer $CRON_SECRET`; un cron externo puede usar `?secret=`.
+const INGEST_DAYS = 7;
+
 export async function GET(request: Request) {
   const secret = process.env.CRON_SECRET;
   const auth = request.headers.get("authorization");
@@ -13,7 +14,7 @@ export async function GET(request: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const ingest = await runIngest();
+  const ingest = await runHazardIngest(INGEST_DAYS);
   if (!ingest.ok) return Response.json({ ingest }, { status: 500 });
 
   const retention = await cleanupOldData();

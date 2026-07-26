@@ -1,13 +1,17 @@
-import { getTrendingTerms } from "@/lib/services/trends";
-import { TrendingPanel } from "@/lib/components/trending-panel";
-import type { TrendingTerm } from "@/lib/types/event";
+import { getHazardPoints, getCountries } from "@/lib/services/hazards";
+import { HazardStats } from "@/lib/components/hazard-stats";
+import type { HazardPoint } from "@/lib/types/hazard";
 
 export async function TrendsSection() {
-  let terms: TrendingTerm[];
+  let points: HazardPoint[];
+  let countries: string[];
   try {
-    terms = await getTrendingTerms();
+    [points, countries] = await Promise.all([
+      getHazardPoints(),
+      getCountries(),
+    ]);
   } catch {
     return null;
   }
-  return <TrendingPanel terms={terms} />;
+  return <HazardStats points={points} countries={countries} />;
 }
