@@ -1,4 +1,7 @@
+"use client";
+
 import { formatDateTime, timeAgo } from "@/lib/utils/date";
+import { useI18n } from "@/lib/components/i18n";
 import type { PipelineHealth } from "@/lib/types/event";
 
 const STYLES: Record<PipelineHealth["level"], { dot: string; text: string }> = {
@@ -8,17 +11,18 @@ const STYLES: Record<PipelineHealth["level"], { dot: string; text: string }> = {
   empty: { dot: "bg-muted", text: "text-muted" },
 };
 
-function label(health: PipelineHealth): string {
-  if (health.level === "empty") return "sin datos aún";
-  if (health.level === "error") return "fallo al actualizar";
-  const prefix = health.level === "stale" ? "desactualizado" : "actualizado";
-  return `${prefix} ${timeAgo(health.lastSuccessAt ?? health.lastRunAt)}`;
-}
-
 export function FreshnessPill({ health }: { health: PipelineHealth }) {
+  const { t, lang } = useI18n();
   const style = STYLES[health.level];
+
+  const label = () => {
+    if (health.level === "empty") return t("health.empty");
+    if (health.level === "error") return t("health.error");
+    const when = timeAgo(health.lastSuccessAt ?? health.lastRunAt, lang);
+    return `${t(health.level === "stale" ? "health.stale" : "health.fresh")} ${when}`;
+  };
   const at = health.lastSuccessAt ?? health.lastRunAt;
-  const tooltip = health.error ?? (at ? formatDateTime(at) : undefined);
+  const tooltip = health.error ?? (at ? formatDateTime(at, lang) : undefined);
 
   return (
     <span
@@ -26,7 +30,7 @@ export function FreshnessPill({ health }: { health: PipelineHealth }) {
       className={`glass-soft inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs ${style.text}`}
     >
       <span className={`h-2 w-2 rounded-full ${style.dot}`} />
-      {label(health)}
+      {label()}
     </span>
   );
 }

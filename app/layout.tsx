@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { LANG_COOKIE, parseLang } from "@/lib/assets/i18n";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -13,19 +15,21 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Radar — pulso de noticias del mundo",
+  title: "Radar — live natural hazards",
   description:
-    "Tablero en vivo de eventos y noticias del mundo, geolocalizados. Datos de GDELT.",
+    "Live dashboard of earthquakes, wildfires, floods, storms and droughts worldwide. Data from USGS, NASA EONET and GDACS.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const lang = parseLang((await cookies()).get(LANG_COOKIE)?.value);
+
   return (
     <html
-      lang="es"
+      lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="h-full overflow-hidden">{children}</body>

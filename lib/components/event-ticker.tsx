@@ -4,6 +4,7 @@ import { HAZARD_KINDS } from "@/lib/assets/hazard-kinds";
 import { timeAgo } from "@/lib/utils/date";
 import { useHazardFilter } from "@/lib/components/hazard-filter";
 import { useMapFocus } from "@/lib/components/map-focus";
+import { useI18n } from "@/lib/components/i18n";
 import type { HazardPoint } from "@/lib/types/hazard";
 
 const MAX_ITEMS = 40;
@@ -13,6 +14,7 @@ const SECONDS_PER_ITEM = 7;
 export function EventTicker({ points }: { points: HazardPoint[] }) {
   const { isVisible } = useHazardFilter();
   const { focusOn } = useMapFocus();
+  const { t, lang } = useI18n();
 
   const recent = points
     .filter((p) =>
@@ -29,7 +31,7 @@ export function EventTicker({ points }: { points: HazardPoint[] }) {
     <div className="pointer-events-auto flex items-center gap-3 overflow-hidden border-t border-white/10 bg-black px-4 py-2.5">
       <span className="flex shrink-0 items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-accent">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-        En vivo
+        {t("map.live")}
       </span>
 
       <div className="ticker-mask min-w-0 flex-1">
@@ -51,7 +53,7 @@ export function EventTicker({ points }: { points: HazardPoint[] }) {
                     eventId: point.id,
                   })
                 }
-                className="flex shrink-0 items-center gap-2 text-xs transition-colors hover:text-accent"
+                className="flex shrink-0 cursor-pointer items-center gap-2 text-xs transition-colors hover:text-accent"
               >
                 <span
                   className="h-1.5 w-1.5 shrink-0 rounded-full"
@@ -64,7 +66,7 @@ export function EventTicker({ points }: { points: HazardPoint[] }) {
                 )}
                 <span className="max-w-80 truncate">{point.title}</span>
                 <span className="font-mono text-muted">
-                  {timeAgo(point.occurredAt)}
+                  {timeAgo(point.occurredAt, lang)}
                 </span>
               </button>
             );

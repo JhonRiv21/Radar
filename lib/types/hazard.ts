@@ -9,7 +9,8 @@ export type HazardKind =
   | "flood"
   | "storm"
   | "volcano"
-  | "ice";
+  | "ice"
+  | "drought";
 
 export type HazardPoint = {
   id: string;

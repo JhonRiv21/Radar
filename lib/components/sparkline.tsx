@@ -1,5 +1,5 @@
 const WIDTH = 100;
-const HEIGHT = 32;
+const HEIGHT = 20;
 
 export function Sparkline({
   points,
@@ -14,7 +14,7 @@ export function Sparkline({
   const step = WIDTH / (points.length - 1);
   const coords = points.map((value, i) => {
     const x = i * step;
-    const y = HEIGHT - (value / max) * (HEIGHT - 4) - 2;
+    const y = HEIGHT - (value / max) * (HEIGHT - 3) - 1.5;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
   const line = `M${coords.join(" L")}`;
@@ -25,7 +25,7 @@ export function Sparkline({
     <svg
       viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
       preserveAspectRatio="none"
-      className="h-8 w-full"
+      className="h-5 w-full"
       aria-hidden="true"
     >
       <defs>

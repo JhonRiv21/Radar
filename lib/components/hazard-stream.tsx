@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { fetchHazardsPage } from "@/app/actions";
 import { HazardCard } from "@/lib/components/hazard-card";
+import { useI18n } from "@/lib/components/i18n";
 import {
   useHazardFilter,
   RANGE_OPTIONS,
@@ -17,8 +18,9 @@ export function HazardStream({
   total: number;
 }) {
   const { kinds, country, range } = useHazardFilter();
-  const rangeLabel =
-    RANGE_OPTIONS.find((o) => o.value === range)?.label ?? "";
+  const { t } = useI18n();
+  const rangeKey = RANGE_OPTIONS.find((o) => o.value === range)?.key;
+  const rangeLabel = rangeKey ? t(rangeKey) : "";
   const [items, setItems] = useState(initial);
   const [loadingMore, setLoadingMore] = useState(false);
   const [exhausted, setExhausted] = useState(false);
@@ -80,11 +82,15 @@ export function HazardStream({
   }, [loadMore]);
 
   return (
-    <section className="glass flex min-h-0 basis-3/5 flex-col rounded-xl">
+    <section className="glass flex min-h-0 flex-1 flex-col rounded-xl">
       <div className="flex shrink-0 items-center justify-between gap-2 px-4 pb-3 pt-4">
-        <h2 className="text-sm font-medium">Últimos eventos</h2>
+        <h2 className="text-sm font-medium">{t("events.title")}</h2>
         <span className="text-xs text-muted">
-          {items.length} de {total} · {rangeLabel}
+          {t("events.count", {
+            shown: items.length,
+            total,
+            range: rangeLabel,
+          })}
         </span>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
@@ -96,18 +102,18 @@ export function HazardStream({
 
         {items.length === 0 && !loading && (
           <p className="py-6 text-center text-xs text-muted">
-            Sin eventos para este filtro.
+            {t("events.empty")}
           </p>
         )}
 
         {!exhausted ? (
           <div ref={sentinelRef} className="pt-4 text-center text-xs text-muted">
-            {loading ? "Cargando más eventos…" : " "}
+            {loading ? t("events.loading") : " "}
           </div>
         ) : (
           items.length > 0 && (
             <p className="pt-4 text-center text-xs text-muted">
-              {items.length} eventos · fin del historial
+              {t("events.end", { total: items.length })}
             </p>
           )
         )}

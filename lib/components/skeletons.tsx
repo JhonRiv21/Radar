@@ -2,7 +2,7 @@ const CARDS = 10;
 
 export function TableSkeleton() {
   return (
-    <div className="glass flex min-h-0 basis-3/5 animate-pulse flex-col overflow-hidden rounded-xl p-4">
+    <div className="glass flex min-h-0 flex-1 animate-pulse flex-col overflow-hidden rounded-xl p-4">
       <div className="mb-3 h-3.5 w-32 shrink-0 rounded bg-white/10" />
       <div className="grid gap-3 sm:grid-cols-2">
         {Array.from({ length: CARDS }, (_, i) => (

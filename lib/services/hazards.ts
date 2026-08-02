@@ -4,6 +4,7 @@ import { db } from "@/lib/db/client";
 import { hazards, ingestRuns } from "@/lib/db/schema";
 import { fetchEarthquakes } from "@/lib/services/usgs";
 import { fetchNaturalEvents } from "@/lib/services/eonet";
+import { fetchDroughts } from "@/lib/services/gdacs";
 import { resolveCountry } from "@/lib/utils/reverse-geocode";
 import type {
   HazardInsert,
@@ -59,11 +60,12 @@ export async function runHazardIngest(days: number) {
 }
 
 export async function ingestHazards(days: number) {
-  const [quakes, natural] = await Promise.all([
+  const [quakes, natural, droughts] = await Promise.all([
     fetchEarthquakes(since(days)),
     fetchNaturalEvents(days),
+    fetchDroughts(),
   ]);
-  const rows = [...quakes, ...natural].map((row) => ({
+  const rows = [...quakes, ...natural, ...droughts].map((row) => ({
     ...row,
     country: resolveCountry(row.lng, row.lat, row.place ?? null, row.title),
   }));

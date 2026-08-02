@@ -1,27 +1,38 @@
-const DEFAULT_TIMEZONE = "America/Bogota";
-const LOCALE = "es-CO";
+import { LOCALES, type Lang } from "@/lib/assets/i18n";
 
+const DEFAULT_TIMEZONE = "America/Bogota";
+
+// Solo confiable en cliente; en servidor (Vercel) devuelve UTC.
 export function getSystemTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
 export function formatDateTime(
   date: Date | null,
+  lang: Lang = "en",
   timeZone: string = DEFAULT_TIMEZONE,
 ): string {
   if (!date) return "—";
-  return new Intl.DateTimeFormat(LOCALE, {
+  return new Intl.DateTimeFormat(LOCALES[lang], {
     timeZone,
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(date));
 }
 
-export function timeAgo(date: Date | null): string {
+// "hace 3h" / "3h ago": el orden del adverbio cambia según el idioma.
+export function timeAgo(date: Date | null, lang: Lang = "en"): string {
   if (!date) return "—";
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
-  if (seconds < 60) return `hace ${seconds}s`;
-  if (seconds < 3600) return `hace ${Math.floor(seconds / 60)}m`;
-  if (seconds < 86400) return `hace ${Math.floor(seconds / 3600)}h`;
-  return `hace ${Math.floor(seconds / 86400)}d`;
+
+  const amount =
+    seconds < 60
+      ? `${seconds}s`
+      : seconds < 3600
+        ? `${Math.floor(seconds / 60)}m`
+        : seconds < 86400
+          ? `${Math.floor(seconds / 3600)}h`
+          : `${Math.floor(seconds / 86400)}d`;
+
+  return lang === "es" ? `hace ${amount}` : `${amount} ago`;
 }

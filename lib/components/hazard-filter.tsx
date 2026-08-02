@@ -1,15 +1,16 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { HAZARD_KINDS, KIND_ORDER } from "@/lib/assets/hazard-kinds";
 import type { HazardKind } from "@/lib/types/hazard";
+import type { MessageKey } from "@/lib/assets/i18n";
+import { useI18n } from "@/lib/components/i18n";
 
 export type RangeDays = 1 | 15 | 30;
 
-export const RANGE_OPTIONS: { value: RangeDays; label: string }[] = [
-  { value: 1, label: "Hoy" },
-  { value: 15, label: "15 días" },
-  { value: 30, label: "30 días" },
+export const RANGE_OPTIONS: { value: RangeDays; key: MessageKey }[] = [
+  { value: 1, key: "range.today" },
+  { value: 15, key: "range.15d" },
+  { value: 30, key: "range.30d" },
 ];
 
 const ALL_COUNTRIES = "all";
@@ -102,6 +103,7 @@ export function useHazardFilter() {
 
 export function RangeSelector() {
   const { range, setRange } = useHazardFilter();
+  const { t } = useI18n();
 
   return (
     <div className="glass-soft flex overflow-hidden rounded-md text-xs">
@@ -112,44 +114,13 @@ export function RangeSelector() {
           onClick={() => setRange(option.value)}
           className={
             range === option.value
-              ? "bg-accent/15 px-2.5 py-1 text-accent"
-              : "px-2.5 py-1 text-muted transition-colors hover:text-foreground"
+              ? "cursor-pointer bg-accent/15 px-2.5 py-1 text-accent"
+              : "cursor-pointer px-2.5 py-1 text-muted transition-colors hover:text-foreground"
           }
         >
-          {option.label}
+          {t(option.key)}
         </button>
       ))}
-    </div>
-  );
-}
-
-export function KindChips() {
-  const { kinds, toggleKind } = useHazardFilter();
-
-  return (
-    <div className="flex flex-wrap gap-1.5">
-      {KIND_ORDER.map((kind) => {
-        const meta = HAZARD_KINDS[kind];
-        const on = kinds.has(kind);
-        return (
-          <button
-            key={kind}
-            type="button"
-            onClick={() => toggleKind(kind)}
-            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs transition-colors ${
-              on
-                ? "border-white/30 bg-white/10 text-foreground"
-                : "border-white/10 text-muted hover:text-foreground"
-            }`}
-          >
-            <span
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: meta.color }}
-            />
-            {meta.label}
-          </button>
-        );
-      })}
     </div>
   );
 }

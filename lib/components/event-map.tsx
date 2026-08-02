@@ -14,6 +14,7 @@ import { hazardsToGeoJson, graticule } from "@/lib/utils/geo";
 import { useMapFocus } from "@/lib/components/map-focus";
 import { MapDetail } from "@/lib/components/map-detail";
 import { useHazardFilter } from "@/lib/components/hazard-filter";
+import { useI18n } from "@/lib/components/i18n";
 import type { HazardPoint } from "@/lib/types/hazard";
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
@@ -30,6 +31,8 @@ const PING_LAYERS = [
 ] as const;
 const PING_CYCLE_MS = 3200;
 const PING_MIN_WEIGHT = 5;
+// Radio de tolerancia en píxeles: los puntos chicos miden 3px y son casi imposibles de acertar.
+const HIT_TOLERANCE_PX = 10;
 // El bucle de medición de error del globo (MapLibre) corre en cada render.
 // A 60fps satura la consola con warnings de readback; 20fps basta para esta rotación lenta.
 const FRAME_MS = 1000 / 20;
@@ -64,6 +67,7 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
   const fitRef = useRef<((coords: [number, number][]) => void) | null>(null);
   const { focus, focusOn, clearFocus } = useMapFocus();
   const { isVisible, country } = useHazardFilter();
+  const { t } = useI18n();
   const [autoSpin, setAutoSpin] = useState(true);
   const autoSpinRef = useRef(true);
   const focusOnRef = useRef(focusOn);
@@ -203,11 +207,36 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
         },
       });
 
-      map.on("click", "hotspots-core", (e) => {
-        const feature = e.features?.[0];
-        if (!feature) return;
-        const { id } = feature.properties as { id: string };
-        const point = dataRef.current.find((p) => p.id === id);
+      // Se consulta una caja alrededor del cursor, no el píxel exacto.
+      const pointNear = ({ x, y }: { x: number; y: number }) => {
+        const hits = map.queryRenderedFeatures(
+          [
+            [x - HIT_TOLERANCE_PX, y - HIT_TOLERANCE_PX],
+            [x + HIT_TOLERANCE_PX, y + HIT_TOLERANCE_PX],
+          ],
+          { layers: ["hotspots-core"] },
+        );
+        if (!hits.length) return null;
+
+        // Con varios eventos en la zona gana el más cercano al cursor.
+        let best: HazardPoint | null = null;
+        let bestDistance = Infinity;
+        for (const hit of hits) {
+          const { id } = hit.properties as { id: string };
+          const candidate = dataRef.current.find((p) => p.id === id);
+          if (!candidate) continue;
+          const screen = map.project([candidate.lng, candidate.lat]);
+          const distance = (screen.x - x) ** 2 + (screen.y - y) ** 2;
+          if (distance < bestDistance) {
+            bestDistance = distance;
+            best = candidate;
+          }
+        }
+        return best;
+      };
+
+      map.on("click", (e) => {
+        const point = pointNear(e.point);
         if (!point) return;
         focusOnRef.current({
           lat: point.lat,
@@ -216,11 +245,9 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
           eventId: point.id,
         });
       });
-      map.on("mouseenter", "hotspots-core", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", "hotspots-core", () => {
-        map.getCanvas().style.cursor = "";
+
+      map.on("mousemove", (e) => {
+        map.getCanvas().style.cursor = pointNear(e.point) ? "pointer" : "";
       });
 
       startLoop();
@@ -366,9 +393,9 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
       <button
         type="button"
         onClick={toggleSpin}
-        title={autoSpin ? "Pausar animación" : "Reanudar animación"}
-        aria-label={autoSpin ? "Pausar animación" : "Reanudar animación"}
-        className="glass-soft absolute right-2.5 top-44 flex h-7 w-7 items-center justify-center rounded text-sm text-muted transition-colors hover:text-foreground"
+        title={t(autoSpin ? "map.pause" : "map.resume")}
+        aria-label={t(autoSpin ? "map.pause" : "map.resume")}
+        className="glass-soft absolute right-2.5 top-44 cursor-pointer flex h-7 w-7 items-center justify-center rounded text-sm text-muted transition-colors hover:text-foreground"
       >
         {autoSpin ? "❚❚" : "▶"}
       </button>

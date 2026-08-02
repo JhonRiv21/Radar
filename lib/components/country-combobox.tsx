@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { COUNTRIES, COUNTRY_BY_NAME } from "@/lib/assets/countries";
 import { useHazardFilter } from "@/lib/components/hazard-filter";
+import { useI18n } from "@/lib/components/i18n";
 
 const ALL = "all";
 
@@ -14,6 +15,7 @@ export function countryFlag(name: string | null): string {
 
 export function CountryCombobox({ countries }: { countries: string[] }) {
   const { country, setCountry } = useHazardFilter();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -44,10 +46,10 @@ export function CountryCombobox({ countries }: { countries: string[] }) {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="glass-soft flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs text-muted transition-colors hover:text-foreground"
+        className="glass-soft flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs text-muted transition-colors hover:text-foreground"
       >
         {country === ALL ? (
-          "Todos los países"
+          t("country.all")
         ) : (
           <>
             <span aria-hidden="true">{countryFlag(country)}</span>
@@ -63,7 +65,7 @@ export function CountryCombobox({ countries }: { countries: string[] }) {
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar país…"
+            placeholder={t("country.search")}
             className="w-full border-b border-white/10 bg-transparent px-3 py-2 text-xs outline-none placeholder:text-muted"
           />
           <ul className="max-h-64 overflow-y-auto py-1">
@@ -75,7 +77,7 @@ export function CountryCombobox({ countries }: { countries: string[] }) {
                   country === ALL ? "text-accent" : "text-muted"
                 }`}
               >
-                Todos los países
+                {t("country.all")}
               </button>
             </li>
             {filtered.map((name) => (
@@ -93,7 +95,7 @@ export function CountryCombobox({ countries }: { countries: string[] }) {
               </li>
             ))}
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-xs text-muted">Sin resultados</li>
+              <li className="px-3 py-2 text-xs text-muted">{t("country.noResults")}</li>
             )}
           </ul>
         </div>
