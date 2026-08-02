@@ -44,7 +44,7 @@ export default async function Home() {
               <div className="pointer-events-none relative z-10 flex h-full flex-col">
                 <AutoRefresh />
 
-                <header className="pointer-events-auto flex shrink-0 items-center justify-between gap-3 px-4 pt-4">
+                <header className="pointer-events-auto flex shrink-0 items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 pt-4">
                   <div className="flex items-center gap-2">
                     <PanelToggle />
                     <div className="glass flex items-center gap-2 rounded-full px-4 py-2">
