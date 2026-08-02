@@ -13,10 +13,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { hazardsToGeoJson, graticule } from "@/lib/utils/geo";
 import { useMapFocus } from "@/lib/components/map-focus";
 import { MapDetail } from "@/lib/components/map-detail";
-import {
-  useHazardFilter,
-  RANGE_OPTIONS,
-} from "@/lib/components/hazard-filter";
+import { useHazardFilter } from "@/lib/components/hazard-filter";
 import type { HazardPoint } from "@/lib/types/hazard";
 setWorkerUrl("/maplibre/maplibre-gl-worker.mjs");
 
@@ -33,7 +30,9 @@ const PING_LAYERS = [
 ] as const;
 const PING_CYCLE_MS = 3200;
 const PING_MIN_WEIGHT = 5;
-const PING_FPS_MS = 1000 / 30;
+// El bucle de medición de error del globo (MapLibre) corre en cada render.
+// A 60fps satura la consola con warnings de readback; 20fps basta para esta rotación lenta.
+const FRAME_MS = 1000 / 20;
 
 const SATELLITE_TILES =
   "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg";
@@ -64,7 +63,7 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
   const flyToRef = useRef<((lat: number, lng: number) => void) | null>(null);
   const fitRef = useRef<((coords: [number, number][]) => void) | null>(null);
   const { focus, focusOn, clearFocus } = useMapFocus();
-  const { isVisible, country, range } = useHazardFilter();
+  const { isVisible, country } = useHazardFilter();
   const [autoSpin, setAutoSpin] = useState(true);
   const autoSpinRef = useRef(true);
   const focusOnRef = useRef(focusOn);
@@ -229,24 +228,23 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
 
     let frameId = 0;
     let lastFrame = 0;
-    let lastPing = 0;
     const startLoop = () => {
       const step = (now: number) => {
+        frameId = requestAnimationFrame(step);
+
+        // Un solo acelerador para todo: menos renders = menos readbacks del globo.
+        if (now - lastFrame < FRAME_MS) return;
         const elapsed = lastFrame ? (now - lastFrame) / 1000 : 0;
         lastFrame = now;
 
-        if (spinning && autoSpinRef.current && !map.isMoving()) {
+        // En pausa o pestaña oculta no se toca el mapa: sin renders, sin lecturas de GPU.
+        if (document.hidden || !autoSpinRef.current) return;
+
+        if (spinning && !map.isMoving()) {
           const center = map.getCenter();
           center.lng -= DEGREES_PER_SECOND * elapsed;
           map.jumpTo({ center });
         }
-
-        // El pulso no necesita 60fps; a 30 se ve igual y baja a la mitad el trabajo de GPU.
-        if (now - lastPing < PING_FPS_MS) {
-          frameId = requestAnimationFrame(step);
-          return;
-        }
-        lastPing = now;
 
         PING_LAYERS.forEach((id, index) => {
           if (!map.getLayer(id)) return;
@@ -259,19 +257,18 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
             0.6 * (1 - phase) ** 1.4,
           );
         });
-
-        frameId = requestAnimationFrame(step);
       };
       frameId = requestAnimationFrame(step);
     };
 
+    // Centra el globo en el área libre: la píldora de arriba y la tira de abajo lo recortan.
     const applyPadding = () => {
       const wide = window.matchMedia("(min-width: 64rem)").matches;
       map.setPadding({
         left: wide ? container.clientWidth * 0.4 : 0,
-        top: container.clientHeight * 0.12,
+        top: container.clientHeight * 0.06,
         right: 0,
-        bottom: 0,
+        bottom: container.clientHeight * 0.06,
       });
     };
     map.once("load", applyPadding);
@@ -353,9 +350,6 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
     ? (points.find((p) => p.id === focus.eventId) ?? null)
     : null;
 
-  const rangeLabel =
-    RANGE_OPTIONS.find((o) => o.value === range)?.label ?? "";
-
   const toggleSpin = () => {
     const next = !autoSpin;
     autoSpinRef.current = next;
@@ -369,14 +363,11 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
         <MapDetail point={selectedPoint} onClose={() => clearFocus()} />
       )}
 
-      <div className="glass-soft pointer-events-none absolute bottom-4 right-4 rounded-md px-3 py-1.5 text-xs text-muted">
-        {visible.length} eventos · {rangeLabel}
-      </div>
       <button
         type="button"
         onClick={toggleSpin}
-        title={autoSpin ? "Pausar rotación" : "Reanudar rotación"}
-        aria-label={autoSpin ? "Pausar rotación" : "Reanudar rotación"}
+        title={autoSpin ? "Pausar animación" : "Reanudar animación"}
+        aria-label={autoSpin ? "Pausar animación" : "Reanudar animación"}
         className="glass-soft absolute right-2.5 top-44 flex h-7 w-7 items-center justify-center rounded text-sm text-muted transition-colors hover:text-foreground"
       >
         {autoSpin ? "❚❚" : "▶"}

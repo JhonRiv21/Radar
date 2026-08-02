@@ -3,11 +3,22 @@
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { fetchHazardsPage } from "@/app/actions";
 import { HazardCard } from "@/lib/components/hazard-card";
-import { useHazardFilter } from "@/lib/components/hazard-filter";
+import {
+  useHazardFilter,
+  RANGE_OPTIONS,
+} from "@/lib/components/hazard-filter";
 import type { HazardRow, HazardFilters } from "@/lib/types/hazard";
 
-export function HazardStream({ initial }: { initial: HazardRow[] }) {
+export function HazardStream({
+  initial,
+  total,
+}: {
+  initial: HazardRow[];
+  total: number;
+}) {
   const { kinds, country, range } = useHazardFilter();
+  const rangeLabel =
+    RANGE_OPTIONS.find((o) => o.value === range)?.label ?? "";
   const [items, setItems] = useState(initial);
   const [loadingMore, setLoadingMore] = useState(false);
   const [exhausted, setExhausted] = useState(false);
@@ -70,9 +81,12 @@ export function HazardStream({ initial }: { initial: HazardRow[] }) {
 
   return (
     <section className="glass flex min-h-0 basis-3/5 flex-col rounded-xl">
-      <h2 className="shrink-0 px-4 pb-3 pt-4 text-sm font-medium">
-        Últimos eventos
-      </h2>
+      <div className="flex shrink-0 items-center justify-between gap-2 px-4 pb-3 pt-4">
+        <h2 className="text-sm font-medium">Últimos eventos</h2>
+        <span className="text-xs text-muted">
+          {items.length} de {total} · {rangeLabel}
+        </span>
+      </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <div className="grid gap-3 sm:grid-cols-2">
           {items.map((hazard) => (

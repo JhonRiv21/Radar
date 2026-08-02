@@ -60,6 +60,43 @@ body {
   }
 }
 
+/* Tira de noticias: se desplaza media pista porque el contenido está duplicado. */
+@keyframes ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* La duración real la fija el componente según cuántos eventos haya. */
+.ticker-track {
+  animation: ticker-scroll 240s linear infinite;
+}
+
+.ticker-mask:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+/* Difumina los bordes para que las entradas no aparezcan de golpe. */
+.ticker-mask {
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 2rem,
+    black calc(100% - 2rem),
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}
+
 .maplibregl-map .maplibregl-ctrl-top-right {
   top: 6.5rem;
 }

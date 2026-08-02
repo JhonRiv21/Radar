@@ -4,7 +4,7 @@ import { db } from "@/lib/db/client";
 import { hazards, ingestRuns } from "@/lib/db/schema";
 import { fetchEarthquakes } from "@/lib/services/usgs";
 import { fetchNaturalEvents } from "@/lib/services/eonet";
-import { countryAt } from "@/lib/utils/reverse-geocode";
+import { resolveCountry } from "@/lib/utils/reverse-geocode";
 import type {
   HazardInsert,
   HazardRow,
@@ -65,7 +65,7 @@ export async function ingestHazards(days: number) {
   ]);
   const rows = [...quakes, ...natural].map((row) => ({
     ...row,
-    country: countryAt(row.lng, row.lat),
+    country: resolveCountry(row.lng, row.lat, row.place ?? null, row.title),
   }));
   const inserted = await store(rows);
   return { fetched: rows.length, inserted };
