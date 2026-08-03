@@ -88,7 +88,6 @@ export const getHazardPoints = memoTtl(async (): Promise<HazardPoint[]> => {
       title: hazards.title,
       country: hazards.country,
       occurredAt: hazards.occurredAt,
-      url: hazards.url,
     })
     .from(hazards)
     .where(gte(hazards.occurredAt, since()))
@@ -97,6 +96,15 @@ export const getHazardPoints = memoTtl(async (): Promise<HazardPoint[]> => {
 
   return rows.map((r) => ({ ...r, kind: r.kind as HazardKind }));
 }, READ_TTL_MS);
+
+export async function getHazardUrl(id: string): Promise<string | null> {
+  const [row] = await db
+    .select({ url: hazards.url })
+    .from(hazards)
+    .where(eq(hazards.id, id))
+    .limit(1);
+  return row?.url ?? null;
+}
 
 export const getCountries = memoTtl(async (): Promise<string[]> => {
   const rows = (await db.execute(sql`

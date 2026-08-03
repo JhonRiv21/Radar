@@ -65,7 +65,7 @@ export function EventTicker({ points }: { points: HazardPoint[] }) {
                   </span>
                 )}
                 <span className="max-w-80 truncate">{point.title}</span>
-                <span className="font-mono text-muted">
+                <span className="font-mono text-muted" suppressHydrationWarning>
                   {timeAgo(point.occurredAt, lang)}
                 </span>
               </button>

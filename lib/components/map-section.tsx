@@ -1,5 +1,5 @@
 import { getHazardPoints } from "@/lib/services/hazards";
-import { EventMap } from "@/lib/components/event-map";
+import { MapLoader } from "@/lib/components/map-loader";
 import { DbError } from "@/lib/components/db-error";
 import type { HazardPoint } from "@/lib/types/hazard";
 
@@ -18,7 +18,7 @@ export async function MapSection() {
 
   return (
     <div className="relative h-full w-full">
-      <EventMap points={points} />
+      <MapLoader points={points} />
     </div>
   );
 }

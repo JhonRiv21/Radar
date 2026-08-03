@@ -30,7 +30,7 @@ export function FreshnessPill({ health }: { health: PipelineHealth }) {
       className={`glass-soft inline-flex items-center gap-2 rounded-full px-1 sm:px-3 py-1 text-[10px] sm:text-xs ${style.text}`}
     >
       <span className={`h-2 w-2 rounded-full ${style.dot}`} />
-      {label()}
+      <span suppressHydrationWarning>{label()}</span>
     </span>
   );
 }

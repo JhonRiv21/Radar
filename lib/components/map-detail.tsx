@@ -1,9 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { HAZARD_KINDS } from "@/lib/assets/hazard-kinds";
 import { timeAgo, formatDateTime } from "@/lib/utils/date";
 import { countryFlag } from "@/lib/components/country-combobox";
 import { useI18n } from "@/lib/components/i18n";
+import { fetchHazardUrl } from "@/app/actions";
 import type { HazardPoint } from "@/lib/types/hazard";
 
 export function MapDetail({
@@ -16,6 +18,20 @@ export function MapDetail({
   const { t, lang } = useI18n();
   const meta = HAZARD_KINDS[point.kind];
   const label = t(`kind.${point.kind}`);
+  const [detail, setDetail] = useState<{ id: string; url: string | null }>();
+
+  useEffect(() => {
+    let active = true;
+    fetchHazardUrl(point.id).then((url) => {
+      if (active) setDetail({ id: point.id, url });
+    });
+    return () => {
+      active = false;
+    };
+  }, [point.id]);
+
+  // Guardar el id junto al valor evita mostrar el enlace del punto anterior.
+  const url = detail?.id === point.id ? detail.url : null;
 
   // En móvil se ancla entre ambos bordes y por encima de la tira y el crédito.
   return (
@@ -47,12 +63,16 @@ export function MapDetail({
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
         <p className="text-sm font-medium leading-snug">{point.title}</p>
         <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted">
-          <span className="font-mono" title={formatDateTime(point.occurredAt, lang)}>
+          <span
+            className="font-mono"
+            title={formatDateTime(point.occurredAt, lang)}
+            suppressHydrationWarning
+          >
             {timeAgo(point.occurredAt, lang)}
           </span>
-          {point.url && (
+          {url && (
             <a
-              href={point.url}
+              href={url}
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 transition-colors hover:text-accent"

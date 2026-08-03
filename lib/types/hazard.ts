@@ -21,7 +21,6 @@ export type HazardPoint = {
   title: string;
   country: string | null;
   occurredAt: Date;
-  url: string | null;
 };
 
 export type HazardFilters = {

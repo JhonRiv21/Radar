@@ -71,7 +71,11 @@ export function HazardCard({ hazard }: { hazard: HazardRow }) {
       </p>
 
       <footer className="mt-auto flex items-center justify-between gap-2 pt-3 text-xs text-muted">
-        <span className="font-mono" title={formatDateTime(hazard.occurredAt, lang)}>
+        <span
+          className="font-mono"
+          title={formatDateTime(hazard.occurredAt, lang)}
+          suppressHydrationWarning
+        >
           {timeAgo(hazard.occurredAt, lang)}
           {hazard.depthKm !== null && <span> · {Math.round(hazard.depthKm)} km</span>}
         </span>
