@@ -1,9 +1,11 @@
-name: Ingesta GDELT
+name: Consumo de amenazas
 
 on:
   schedule:
     - cron: "*/30 * * * *"
   workflow_dispatch:
+
+permissions: {}
 
 jobs:
   ingest:
@@ -28,9 +30,10 @@ jobs:
           RADAR_URL: ${{ secrets.RADAR_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
-          code=$(curl -sS -o /tmp/out.json -w "%{http_code}" \
+          # El cuerpo se descarta: el repo es público y la respuesta de error
+          # puede traer detalles de la base de datos.
+          code=$(curl -sS -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer $CRON_SECRET" \
             "${RADAR_URL%/}/api/cron/ingest")
-          cat /tmp/out.json
-          echo ""
+          echo "HTTP $code"
           test "$code" = "200"

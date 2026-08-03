@@ -40,7 +40,7 @@ export function I18nProvider({
 
   const setLang = useCallback((next: Lang) => {
     setLangState(next);
-    document.cookie = `${LANG_COOKIE}=${next}; path=/; max-age=${ONE_YEAR}; SameSite=Lax`;
+    document.cookie = `${LANG_COOKIE}=${next}; path=/; max-age=${ONE_YEAR}; SameSite=Lax; Secure`;
     document.documentElement.lang = next;
   }, []);
 

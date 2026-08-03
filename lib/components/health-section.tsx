@@ -6,7 +6,6 @@ const UNKNOWN: PipelineHealth = {
   level: "empty",
   lastSuccessAt: null,
   lastRunAt: null,
-  error: null,
 };
 
 export async function HealthSection() {

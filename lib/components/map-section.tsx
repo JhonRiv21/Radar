@@ -8,11 +8,10 @@ export async function MapSection() {
   try {
     points = await getHazardPoints();
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Error de base de datos";
+    console.error("[map-section] fallo al leer amenazas", err);
     return (
       <div className="p-6">
-        <DbError message={message} />
+        <DbError />
       </div>
     );
   }

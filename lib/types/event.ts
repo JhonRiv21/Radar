@@ -4,5 +4,4 @@ export type PipelineHealth = {
   level: FreshnessLevel;
   lastSuccessAt: Date | null;
   lastRunAt: Date | null;
-  error: string | null;
 };

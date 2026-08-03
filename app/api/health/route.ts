@@ -9,7 +9,7 @@ export async function GET() {
       status: health.level === "error" ? 503 : 200,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Error de base de datos";
-    return Response.json({ level: "error", error: message }, { status: 503 });
+    console.error("[api/health] fallo al leer el estado del pipeline", err);
+    return Response.json({ level: "error" }, { status: 503 });
   }
 }

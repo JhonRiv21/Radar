@@ -14,9 +14,8 @@ export async function EventsSection() {
       getHazardsCount(INITIAL_FILTERS),
     ]);
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Error de base de datos";
-    return <DbError message={message} />;
+    console.error("[events-section] fallo al leer amenazas", err);
+    return <DbError />;
   }
 
   return <HazardStream initial={hazards} total={total} />;

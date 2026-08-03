@@ -1,4 +1,3 @@
-import { cache } from "react";
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db/client";
 import { hazards, ingestRuns } from "@/lib/db/schema";
@@ -6,6 +5,8 @@ import { fetchEarthquakes } from "@/lib/services/usgs";
 import { fetchNaturalEvents } from "@/lib/services/eonet";
 import { fetchDroughts } from "@/lib/services/gdacs";
 import { resolveCountry } from "@/lib/utils/reverse-geocode";
+import { safeUrl } from "@/lib/utils/safe-url";
+import { memoTtl } from "@/lib/utils/cache";
 import type {
   HazardInsert,
   HazardRow,
@@ -16,6 +17,8 @@ import type {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WINDOW_DAYS = 30;
+const READ_TTL_MS = 60 * 1000;
+const MAX_POINTS = 2000;
 
 export const PAGE_SIZE = 10;
 
@@ -67,13 +70,14 @@ export async function ingestHazards(days: number) {
   ]);
   const rows = [...quakes, ...natural, ...droughts].map((row) => ({
     ...row,
+    url: safeUrl(row.url),
     country: resolveCountry(row.lng, row.lat, row.place ?? null, row.title),
   }));
   const inserted = await store(rows);
   return { fetched: rows.length, inserted };
 }
 
-export const getHazardPoints = cache(async (): Promise<HazardPoint[]> => {
+export const getHazardPoints = memoTtl(async (): Promise<HazardPoint[]> => {
   const rows = await db
     .select({
       id: hazards.id,
@@ -88,12 +92,13 @@ export const getHazardPoints = cache(async (): Promise<HazardPoint[]> => {
     })
     .from(hazards)
     .where(gte(hazards.occurredAt, since()))
-    .orderBy(desc(hazards.occurredAt));
+    .orderBy(desc(hazards.occurredAt))
+    .limit(MAX_POINTS);
 
   return rows.map((r) => ({ ...r, kind: r.kind as HazardKind }));
-});
+}, READ_TTL_MS);
 
-export const getCountries = cache(async (): Promise<string[]> => {
+export const getCountries = memoTtl(async (): Promise<string[]> => {
   const rows = (await db.execute(sql`
     select distinct country
     from radar.hazards
@@ -102,7 +107,7 @@ export const getCountries = cache(async (): Promise<string[]> => {
     order by country
   `)) as unknown as { country: string }[];
   return rows.map((r) => r.country);
-});
+}, READ_TTL_MS);
 
 function buildWhere(filters: HazardFilters) {
   const clauses = [gte(hazards.occurredAt, since(filters.days))];

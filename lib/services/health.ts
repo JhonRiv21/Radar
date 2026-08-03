@@ -24,13 +24,13 @@ export async function getPipelineHealth(): Promise<PipelineHealth> {
   const lastRunAt = lastRun?.finishedAt ?? lastRun?.startedAt ?? null;
 
   if (!lastRun) {
-    return { level: "empty", lastSuccessAt, lastRunAt, error: null };
+    return { level: "empty", lastSuccessAt, lastRunAt };
   }
   if (lastRun.status === "error") {
-    return { level: "error", lastSuccessAt, lastRunAt, error: lastRun.error };
+    return { level: "error", lastSuccessAt, lastRunAt };
   }
   if (!lastSuccessAt || Date.now() - lastSuccessAt.getTime() > STALE_AFTER_MS) {
-    return { level: "stale", lastSuccessAt, lastRunAt, error: null };
+    return { level: "stale", lastSuccessAt, lastRunAt };
   }
-  return { level: "fresh", lastSuccessAt, lastRunAt, error: null };
+  return { level: "fresh", lastSuccessAt, lastRunAt };
 }

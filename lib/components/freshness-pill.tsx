@@ -22,7 +22,7 @@ export function FreshnessPill({ health }: { health: PipelineHealth }) {
     return `${t(health.level === "stale" ? "health.stale" : "health.fresh")} ${when}`;
   };
   const at = health.lastSuccessAt ?? health.lastRunAt;
-  const tooltip = health.error ?? (at ? formatDateTime(at, lang) : undefined);
+  const tooltip = at ? formatDateTime(at, lang) : undefined;
 
   return (
     <span
