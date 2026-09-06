@@ -2,7 +2,10 @@ import type { NextConfig } from "next";
 
 const TILES = "https://gibs.earthdata.nasa.gov";
 const isDev = process.env.NODE_ENV === "development";
-const devScript = isDev ? " 'unsafe-eval'" : "";
+
+// En producción el script de analítica es del mismo origen (/_vercel/insights/script.js);
+// solo en desarrollo el paquete carga su versión de depuración desde un dominio externo.
+const devScript = isDev ? " 'unsafe-eval' https://va.vercel-scripts.com" : "";
 const devConnect = isDev ? " ws:" : "";
 
 const CSP = [

@@ -49,7 +49,7 @@ function inPolygon(lng: number, lat: number, polygon: Ring[]): boolean {
   return !polygon.slice(1).some((hole) => inRing(lng, lat, hole));
 }
 
-export function countryAt(lng: number, lat: number): string | null {
+function countryAt(lng: number, lat: number): string | null {
   for (const country of load()) {
     if (country.polygons.some((p) => inPolygon(lng, lat, p))) {
       return country.name;
@@ -83,7 +83,7 @@ function names(): [string, string][] {
 }
 
 // Respaldo para epicentros mar adentro: USGS los nombra "58 km WSW of X, Mexico".
-export function countryFromText(text: string | null): string | null {
+function countryFromText(text: string | null): string | null {
   if (!text) return null;
   const lower = text.toLowerCase();
   const tail = (lower.split(",").pop() ?? "").trim();

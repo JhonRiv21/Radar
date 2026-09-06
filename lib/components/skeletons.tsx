@@ -21,7 +21,3 @@ export function TableSkeleton() {
 export function MapSkeleton() {
   return <div className="h-full w-full animate-pulse bg-white/[0.03]" />;
 }
-
-export function PillSkeleton() {
-  return <div className="h-6 w-36 animate-pulse rounded-full bg-white/10" />;
-}

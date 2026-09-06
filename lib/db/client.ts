@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { events, hazards, ingestRuns } from "./schema";
+import { hazards, ingestRuns } from "./schema";
 
 const globalForDb = globalThis as unknown as {
   pg?: ReturnType<typeof postgres>;
@@ -11,4 +11,4 @@ const client =
 
 if (process.env.NODE_ENV !== "production") globalForDb.pg = client;
 
-export const db = drizzle(client, { schema: { events, hazards, ingestRuns } });
+export const db = drizzle(client, { schema: { hazards, ingestRuns } });

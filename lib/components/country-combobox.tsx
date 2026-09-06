@@ -6,6 +6,8 @@ import { useHazardFilter } from "@/lib/components/hazard-filter";
 import { useI18n } from "@/lib/components/i18n";
 
 const ALL = "all";
+const MENU_WIDTH = 256; // w-64
+const EDGE_GAP = 16;
 
 export function countryFlag(name: string | null): string {
   if (!name) return "";
@@ -17,6 +19,7 @@ export function CountryCombobox({ countries }: { countries: string[] }) {
   const { country, setCountry } = useHazardFilter();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
+  const [alignRight, setAlignRight] = useState(true);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -35,6 +38,17 @@ export function CountryCombobox({ countries }: { countries: string[] }) {
     return countries.filter((name) => name.toLowerCase().includes(q));
   }, [countries, query]);
 
+  // Anclado a la derecha el menú crece hacia la izquierda; si no cabe, se voltea.
+  const toggle = () => {
+    if (open) {
+      setOpen(false);
+      return;
+    }
+    const rect = rootRef.current?.getBoundingClientRect();
+    setAlignRight(!rect || rect.right >= MENU_WIDTH + EDGE_GAP);
+    setOpen(true);
+  };
+
   const select = (value: string) => {
     setCountry(value);
     setOpen(false);
@@ -45,7 +59,7 @@ export function CountryCombobox({ countries }: { countries: string[] }) {
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         className="glass-soft flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs text-muted transition-colors hover:text-foreground"
       >
         {country === ALL ? (
@@ -60,7 +74,11 @@ export function CountryCombobox({ countries }: { countries: string[] }) {
       </button>
 
       {open && (
-        <div className="glass absolute right-0 z-20 mt-1 w-64 overflow-hidden rounded-lg">
+        <div
+          className={`glass absolute z-20 mt-1 w-64 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg ${
+            alignRight ? "right-0" : "left-0"
+          }`}
+        >
           <input
             autoFocus
             value={query}

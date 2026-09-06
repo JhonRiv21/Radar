@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
+import { Analytics } from "@vercel/analytics/next";
 import { LANG_COOKIE, parseLang } from "@/lib/assets/i18n";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -32,7 +33,10 @@ export default async function RootLayout({
       lang={lang}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="h-full overflow-hidden">{children}</body>
+      <body className="h-full overflow-hidden">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }

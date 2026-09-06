@@ -3,7 +3,6 @@ import { cookies } from "next/headers";
 import { MapSection } from "@/lib/components/map-section";
 import { TrendsSection } from "@/lib/components/trends-section";
 import { EventsSection } from "@/lib/components/events-section";
-import { HealthSection } from "@/lib/components/health-section";
 import { TickerSection } from "@/lib/components/ticker-section";
 import { AutoRefresh } from "@/lib/components/auto-refresh";
 import { MapFocusProvider } from "@/lib/components/map-focus";
@@ -16,11 +15,7 @@ import {
   PanelToggle,
   PanelDrawer,
 } from "@/lib/components/panel-drawer";
-import {
-  TableSkeleton,
-  MapSkeleton,
-  PillSkeleton,
-} from "@/lib/components/skeletons";
+import { TableSkeleton, MapSkeleton } from "@/lib/components/skeletons";
 
 export const dynamic = "force-dynamic";
 
@@ -55,12 +50,7 @@ export default async function Home() {
                       <BrandTagline />
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <LanguageSelector />
-                    <Suspense fallback={<PillSkeleton />}>
-                      <HealthSection />
-                    </Suspense>
-                  </div>
+                  <LanguageSelector />
                 </header>
 
                 <div className="relative flex min-h-0 flex-1">

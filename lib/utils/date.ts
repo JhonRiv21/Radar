@@ -2,11 +2,6 @@ import { LOCALES, type Lang } from "@/lib/assets/i18n";
 
 const DEFAULT_TIMEZONE = "America/Bogota";
 
-// Solo confiable en cliente; en servidor (Vercel) devuelve UTC.
-export function getSystemTimeZone(): string {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
-}
-
 export function formatDateTime(
   date: Date | null,
   lang: Lang = "en",

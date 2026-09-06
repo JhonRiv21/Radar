@@ -16,6 +16,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "drizzle-orm": "^0.45.2",
     "maplibre-gl": "^6.0.0",
     "next": "16.2.11",
@@ -25,7 +26,8 @@
   },
   "overrides": {
     "postcss": "^8.5.25",
-    "sharp": "^0.35.3"
+    "sharp": "^0.35.3",
+    "nanoid": "^3.3.18"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

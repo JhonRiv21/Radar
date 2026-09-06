@@ -20,7 +20,7 @@ const WINDOW_DAYS = 30;
 const READ_TTL_MS = 60 * 1000;
 const MAX_POINTS = 2000;
 
-export const PAGE_SIZE = 10;
+const PAGE_SIZE = 10;
 
 function since(days = WINDOW_DAYS) {
   return new Date(Date.now() - days * DAY_MS);
@@ -62,7 +62,7 @@ export async function runHazardIngest(days: number) {
   }
 }
 
-export async function ingestHazards(days: number) {
+async function ingestHazards(days: number) {
   const [quakes, natural, droughts] = await Promise.all([
     fetchEarthquakes(since(days)),
     fetchNaturalEvents(days),

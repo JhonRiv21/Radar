@@ -3,7 +3,7 @@ export type Lang = "en" | "es";
 // Vive aquí y no en el provider: un componente de servidor no puede importar
 // valores reales desde un módulo "use client" (Next los vuelve referencias).
 export const LANG_COOKIE = "radar-lang";
-export const DEFAULT_LANG: Lang = "en";
+const DEFAULT_LANG: Lang = "en";
 
 export function parseLang(value?: string): Lang {
   return value === "es" ? "es" : DEFAULT_LANG;
@@ -57,11 +57,6 @@ export const MESSAGES = {
   "map.pause": { en: "Pause animation", es: "Pausar animación" },
   "map.resume": { en: "Resume animation", es: "Reanudar animación" },
   "map.close": { en: "Close", es: "Cerrar" },
-
-  "health.empty": { en: "no data yet", es: "sin datos aún" },
-  "health.error": { en: "update failed", es: "fallo al actualizar" },
-  "health.fresh": { en: "updated", es: "actualizado" },
-  "health.stale": { en: "stale", es: "desactualizado" },
 
   "error.title": {
     en: "No database connection.",
