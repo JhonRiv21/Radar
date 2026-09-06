@@ -28,7 +28,7 @@ Lo interesante del proyecto no es el mapa, son las restricciones bajo las que es
 
 **Geocodificación inversa sin API externa.** Cada evento llega con coordenadas pero sin
 país. En vez de pegarle a un servicio de geocoding —que cuesta, tiene rate limit y añade
-un punto de falla— el país se resuelve por *point-in-polygon* (ray casting) contra un
+un punto de falla— el país se resuelve por _point-in-polygon_ (ray casting) contra un
 GeoJSON de fronteras incluido en el repo, en memoria. Costo $0, sin cuota, sin red.
 
 **Deduplicación por identidad de la fuente.** Cada registro lleva un `external_id`
@@ -116,8 +116,8 @@ cp .env.example .env.local     # DATABASE_URL, DIRECT_URL, CRON_SECRET
 npm run dev
 ```
 
-Las migraciones están en `drizzle/` y se aplican contra el *session pooler*; la aplicación
-usa el *transaction pooler*.
+Las migraciones están en `drizzle/` y se aplican contra el _session pooler_; la aplicación
+usa el _transaction pooler_.
 
 ## Ingesta
 

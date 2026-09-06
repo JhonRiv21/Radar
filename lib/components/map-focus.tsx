@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 
 export type MapFocus = {
   lat: number;
@@ -37,7 +43,9 @@ export function MapFocusProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <MapFocusContext.Provider value={value}>{children}</MapFocusContext.Provider>
+    <MapFocusContext.Provider value={value}>
+      {children}
+    </MapFocusContext.Provider>
   );
 }
 

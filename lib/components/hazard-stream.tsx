@@ -4,10 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { fetchHazardsPage } from "@/app/actions";
 import { HazardCard } from "@/lib/components/hazard-card";
 import { useI18n } from "@/lib/components/i18n";
-import {
-  useHazardFilter,
-  RANGE_OPTIONS,
-} from "@/lib/components/hazard-filter";
+import { useHazardFilter, RANGE_OPTIONS } from "@/lib/components/hazard-filter";
 import type { HazardRow, HazardFilters } from "@/lib/types/hazard";
 
 export function HazardStream({
@@ -107,7 +104,10 @@ export function HazardStream({
         )}
 
         {!exhausted ? (
-          <div ref={sentinelRef} className="pt-4 text-center text-xs text-muted">
+          <div
+            ref={sentinelRef}
+            className="pt-4 text-center text-xs text-muted"
+          >
             {loading ? t("events.loading") : " "}
           </div>
         ) : (

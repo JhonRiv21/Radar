@@ -1,0 +1,7 @@
+.next
+node_modules
+public/maplibre
+public/world-countries.geojson
+drizzle/meta
+package-lock.json
+next-env.d.ts

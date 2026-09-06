@@ -60,7 +60,9 @@ export function HazardCard({ hazard }: { hazard: HazardRow }) {
           </span>
         )}
         {hazard.alert && (
-          <span className={`ml-auto ${ALERT_STYLES[hazard.alert] ?? "text-muted"}`}>
+          <span
+            className={`ml-auto ${ALERT_STYLES[hazard.alert] ?? "text-muted"}`}
+          >
             {t("card.alert", { level: hazard.alert })}
           </span>
         )}
@@ -77,7 +79,9 @@ export function HazardCard({ hazard }: { hazard: HazardRow }) {
           suppressHydrationWarning
         >
           {timeAgo(hazard.occurredAt, lang)}
-          {hazard.depthKm !== null && <span> · {Math.round(hazard.depthKm)} km</span>}
+          {hazard.depthKm !== null && (
+            <span> · {Math.round(hazard.depthKm)} km</span>
+          )}
         </span>
         {hazard.url && (
           <a

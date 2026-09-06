@@ -4,13 +4,7 @@ export type HazardRow = typeof hazards.$inferSelect;
 export type HazardInsert = typeof hazards.$inferInsert;
 
 export type HazardKind =
-  | "earthquake"
-  | "wildfire"
-  | "flood"
-  | "storm"
-  | "volcano"
-  | "ice"
-  | "drought";
+  "earthquake" | "wildfire" | "flood" | "storm" | "volcano" | "ice" | "drought";
 
 export type HazardPoint = {
   id: string;

@@ -52,10 +52,24 @@ const BASE_STYLE: StyleSpecification = {
     "horizon-color": "#8ec9ef",
     "fog-color": "#0a0e1a",
     "sky-horizon-blend": 0.7,
-    "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 0.4, 7, 0],
+    "atmosphere-blend": [
+      "interpolate",
+      ["linear"],
+      ["zoom"],
+      0,
+      1,
+      5,
+      0.4,
+      7,
+      0,
+    ],
   },
   layers: [
-    { id: "ocean", type: "background", paint: { "background-color": "#0b2138" } },
+    {
+      id: "ocean",
+      type: "background",
+      paint: { "background-color": "#0b2138" },
+    },
   ],
 };
 
@@ -104,7 +118,10 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
     };
 
     map.on("load", () => {
-      map.addSource("world", { type: "geojson", data: "/world-countries.geojson" });
+      map.addSource("world", {
+        type: "geojson",
+        data: "/world-countries.geojson",
+      });
       map.addLayer({
         id: "land",
         type: "fill",
@@ -275,8 +292,7 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
 
         PING_LAYERS.forEach((id, index) => {
           if (!map.getLayer(id)) return;
-          const phase =
-            (now / PING_CYCLE_MS + index / PING_LAYERS.length) % 1;
+          const phase = (now / PING_CYCLE_MS + index / PING_LAYERS.length) % 1;
           map.setPaintProperty(id, "circle-radius", 6 + phase * 34);
           map.setPaintProperty(
             id,
@@ -342,7 +358,11 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
   const visible = useMemo(
     () =>
       points.filter((p) =>
-        isVisible({ kind: p.kind, country: p.country, occurredAt: p.occurredAt }),
+        isVisible({
+          kind: p.kind,
+          country: p.country,
+          occurredAt: p.occurredAt,
+        }),
       ),
     [points, isVisible],
   );
@@ -364,8 +384,7 @@ export function EventMap({ points }: { points: HazardPoint[] }) {
     const filtered = visible;
     dataRef.current = filtered;
     const source = mapRef.current?.getSource("hotspots") as
-      | GeoJSONSource
-      | undefined;
+      GeoJSONSource | undefined;
     if (source) source.setData(hazardsToGeoJson(filtered));
   }, [visible]);
 

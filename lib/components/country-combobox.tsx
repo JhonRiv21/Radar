@@ -113,7 +113,9 @@ export function CountryCombobox({ countries }: { countries: string[] }) {
               </li>
             ))}
             {filtered.length === 0 && (
-              <li className="px-3 py-2 text-xs text-muted">{t("country.noResults")}</li>
+              <li className="px-3 py-2 text-xs text-muted">
+                {t("country.noResults")}
+              </li>
             )}
           </ul>
         </div>

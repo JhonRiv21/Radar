@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import type { HazardKind } from "@/lib/types/hazard";
 import type { MessageKey } from "@/lib/assets/i18n";
 import { useI18n } from "@/lib/components/i18n";

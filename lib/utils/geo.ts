@@ -35,7 +35,7 @@ export function hazardsToGeoJson(points: HazardPoint[]) {
         kind: p.kind,
         title: p.title,
         color: HAZARD_KINDS[p.kind].color,
-        weight: p.magnitude ?? 3
+        weight: p.magnitude ?? 3,
       },
     })),
   };

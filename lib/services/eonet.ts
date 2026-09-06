@@ -81,7 +81,9 @@ function toHazard(event: EonetEvent): HazardInsert | null {
   };
 }
 
-export async function fetchNaturalEvents(days: number): Promise<HazardInsert[]> {
+export async function fetchNaturalEvents(
+  days: number,
+): Promise<HazardInsert[]> {
   const params = new URLSearchParams({ days: String(days), status: "all" });
   const res = await fetch(`${EONET_URL}?${params}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`EONET HTTP ${res.status}`);

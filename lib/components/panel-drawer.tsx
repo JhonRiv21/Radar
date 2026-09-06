@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import { useI18n } from "@/lib/components/i18n";
 
 const PanelContext = createContext<{ open: boolean; toggle: () => void }>({

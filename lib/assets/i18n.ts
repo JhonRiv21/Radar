@@ -37,7 +37,10 @@ export const MESSAGES = {
   "country.noResults": { en: "No results", es: "Sin resultados" },
 
   "events.title": { en: "Latest events", es: "Últimos eventos" },
-  "events.count": { en: "{shown} of {total} · {range}", es: "{shown} de {total} · {range}" },
+  "events.count": {
+    en: "{shown} of {total} · {range}",
+    es: "{shown} de {total} · {range}",
+  },
   "events.loading": { en: "Loading more events…", es: "Cargando más eventos…" },
   "events.end": {
     en: "{total} events · end of history",

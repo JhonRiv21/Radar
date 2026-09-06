@@ -20,7 +20,8 @@ export async function getPipelineHealth(): Promise<PipelineHealth> {
     .orderBy(desc(ingestRuns.startedAt))
     .limit(1);
 
-  const lastSuccessAt = lastSuccess?.finishedAt ?? lastSuccess?.startedAt ?? null;
+  const lastSuccessAt =
+    lastSuccess?.finishedAt ?? lastSuccess?.startedAt ?? null;
   const lastRunAt = lastRun?.finishedAt ?? lastRun?.startedAt ?? null;
 
   if (!lastRun) {
